@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "build": "bun run clean && bun run build:js && bun run build:dts",
-    "build:app": "bun build packages/app/src/index.ts --outfile packages/app/dist/index.js --target node --format esm --packages external",
+    "build:app": "bun build packages/app/src/app.ts --outfile packages/app/dist/index.js --target node --format esm --packages external",
     "build:base": "bun build packages/base/src/index.ts --outfile packages/base/dist/index.js --target node --format esm --packages external",
     "build:dts": "tsc --build packages/base/tsconfig.json packages/app/tsconfig.json --force",
     "build:js": "bun run build:base && bun run build:app",

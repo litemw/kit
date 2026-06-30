@@ -12,7 +12,7 @@
         "./packages/base/src/index.ts"
       ],
       "@kit/app": [
-        "./packages/app/src/index.ts"
+        "./packages/app/src/app.ts"
       ]
     },
     "rootDir": ".",

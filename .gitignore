@@ -13,4 +13,6 @@ build/
 .env.*
 !.env.example
 
+.eslintcache
+
 .DS_Store
