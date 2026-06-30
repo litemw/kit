@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": true,
+    "outDir": "dist",
+    "paths": {
+      "@kit/base": [
+        "./packages/base/src/index.ts"
+      ],
+      "@kit/app": [
+        "./packages/app/src/index.ts"
+      ]
+    },
+    "rootDir": ".",
+    "strict": true,
+    "target": "ES2022",
+    "types": [
+      "bun"
+    ]
+  },
+  "include": [
+    "packages/**/*.ts"
+  ]
+}
