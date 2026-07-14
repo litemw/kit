@@ -1,6 +1,14 @@
-import { Container, type Component } from "@litemw/iocc";
+import { Container, TypeOf, type Component } from "@litemw/iocc";
 import { createContainerHooks } from "./hooks";
-import { IStarter, IStopper } from "./lifecycle";
+import {
+  Aborter,
+  AbortControllerComp,
+  AbortSignaler,
+  IStarter,
+  IStopper,
+  Stopper,
+  AbortReason,
+} from "./lifecycle";
 import { createLogtapeLogger, type Logger } from "./logger";
 import type { Module } from "./module";
 import { Err } from "../core/result";
@@ -12,16 +20,24 @@ export type AppParams = {
 };
 
 export class App {
-  private container: Container;
+  readonly container: Container;
   private modules: Module[];
   private components: Component[];
   private logger: Logger;
+
+  private stoppers: Stopper[] = [];
+  private aborter?: TypeOf<typeof Aborter>;
 
   constructor(p: AppParams = {}) {
     this.modules = p.modules ?? [];
     this.components = p.components ?? [];
     this.logger = p.logger ?? createLogtapeLogger();
     this.container = new Container(createContainerHooks(this.logger));
+
+    this.container
+      .register(AbortControllerComp)
+      .register(AbortSignaler)
+      .register(Aborter);
 
     for (const module of this.modules) {
       for (const component of module.components) {
@@ -41,6 +57,8 @@ export class App {
     });
 
     const starters = await this.container.get(IStarter);
+    this.stoppers = await this.container.get(IStopper);
+    this.aborter = await this.container.get(Aborter);
 
     for (const starter of starters) {
       try {
@@ -54,12 +72,12 @@ export class App {
     this.logger.info("App started 🚀", { starters: starters.length });
   }
 
-  async stop(): Promise<void> {
+  async stop(reason: AbortReason = AbortReason.Stopped): Promise<void> {
     this.logger.info("Stopping app...");
+    this.aborter?.(reason);
+    this.logger.info("Aborter Called with reason {reason}", { reason });
 
-    const stoppers = await this.container.get(IStopper);
-
-    for (const stopper of stoppers) {
+    for (const stopper of this.stoppers) {
       try {
         await stopper.onStop();
       } catch (err) {
@@ -68,6 +86,33 @@ export class App {
       }
     }
 
-    this.logger.info("App stopped 🛑", { stoppers: stoppers.length });
+    this.logger.info("App stopped 🛑", { stoppers: this.stoppers.length });
+  }
+
+  waitSignals(
+    signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"],
+  ): () => void {
+    const unsubscribe = () => {
+      for (const signal of signals) {
+        process.removeListener(signal, handler);
+      }
+    };
+
+    const handler = (signal: NodeJS.Signals) => {
+      unsubscribe();
+      this.logger.info("Received {signal}, shutting down gracefully...", {
+        signal,
+      });
+      void this.stop(AbortReason.Shutdown).catch((err) => {
+        this.logger.error(Err(err), "Graceful shutdown failed");
+        process.exitCode = 1;
+      });
+    };
+
+    for (const signal of signals) {
+      process.once(signal, handler);
+    }
+
+    return unsubscribe;
   }
 }

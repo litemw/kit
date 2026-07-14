@@ -40,6 +40,7 @@ deno add npm:@litemw/kit npm:@litemw/iocc
 | `App` | Owns the container, registers modules/components, runs the lifecycle |
 | `Module` | A group of components, created with `createModule()` |
 | `IStarter` / `IStopper` | Multi tokens — every implementation runs on start/stop |
+| `AbortSignaler` / `Aborter` | Built-in app-wide `AbortSignal` and the function that aborts it |
 | `Logger` | Logging interface the app uses internally — bring your own via `AppInput` |
 | `Result` / `Ok` / `Err` | Minimal result type used for error reporting |
 
@@ -105,14 +106,26 @@ const app = new App({
 });
 ```
 
-The constructor creates a `Container` with logging hooks attached, then
-registers every component from `modules` and `components`. The container is
-available as `app.container`.
+The constructor creates a `Container` with logging hooks attached, registers
+the built-in abort components (`AbortControllerComp`, `AbortSignaler`,
+`Aborter`), then registers every component from `modules` and `components`.
+The container is available as `app.container`.
 
 - `app.start()` — resolves all `IStarter` implementations and calls `onStart()` on each, in order
-- `app.stop()` — resolves all `IStopper` implementations and calls `onStop()` on each, in order
+- `app.stop(reason?)` — aborts the shared signal (default reason `AbortReason.Stopped`), then resolves all `IStopper` implementations and calls `onStop()` on each, in order
+- `app.gracefulShutdown(signals?)` — registers process signal handlers (`SIGINT` and `SIGTERM` by default) that call `app.stop(AbortReason.Shutdown)`; returns an unsubscribe function
 
 If a hook throws, the error is logged and rethrown.
+
+```ts
+const app = new App({ modules });
+await app.start();
+app.gracefulShutdown(); // Ctrl+C / SIGTERM now stop the app cleanly
+```
+
+Handlers are removed after the first signal, so a second signal terminates
+the process immediately. If a stop hook fails during shutdown, the error is
+logged and `process.exitCode` is set to `1`.
 
 ### `createModule(...components)`
 
@@ -142,6 +155,56 @@ const Server = defComp('server')
 ```
 
 Hooks can be sync or async (`void | Promise<void>`).
+
+### `AbortSignaler` / `Aborter`
+
+Every `App` pre-registers a shared `AbortController` and exposes it through two
+components:
+
+- `AbortSignaler` — resolves to the controller's `AbortSignal`
+- `Aborter` — resolves to a bound `abort()` function that aborts that signal
+
+Both resolve from the same underlying controller (`AbortControllerComp`), so
+the signal is a singleton per app — every component that provides
+`AbortSignaler` sees the same instance.
+
+Use them to wire app-wide cancellation without passing an `AbortController`
+around manually:
+
+```ts
+import { defComp } from '@litemw/iocc';
+import { App, Aborter, AbortSignaler, IStarter, IStopper } from '@litemw/kit';
+
+const Worker = defComp('worker')
+  .provide(AbortSignaler)
+  .as(IStarter)
+  .build((signal) => ({
+    onStart() {
+      signal.addEventListener('abort', () => {
+        /* stop in-flight work */
+      });
+    },
+  }));
+
+const Shutdown = defComp('shutdown')
+  .provide(Aborter)
+  .as(IStopper)
+  .build((abort) => ({
+    onStop() {
+      abort(); // aborts the shared signal
+    },
+  }));
+
+const app = new App({ components: [Worker, Shutdown] });
+```
+
+The signal is also handy for anything that accepts `AbortSignal` natively —
+`fetch`, timers, streams:
+
+```ts
+const signal = await app.container.get(AbortSignaler);
+await fetch(url, { signal });
+```
 
 ### `Logger`
 
