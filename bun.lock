@@ -16,20 +16,9 @@
         "rimraf": "^6.1.3",
         "typescript": "^6.0.2",
       },
-    },
-    "packages/app": {
-      "name": "@kit/app",
-      "version": "0.0.0",
-      "dependencies": {
-        "@kit/base": "workspace:*",
-      },
       "peerDependencies": {
         "@litemw/iocc": "^0.0.3",
       },
-    },
-    "packages/base": {
-      "name": "@kit/base",
-      "version": "0.0.0",
     },
   },
   "packages": {
@@ -60,10 +49,6 @@
     "@humanwhocodes/module-importer": ["@humanwhocodes/module-importer@1.0.1", "", {}, "sha512-bxveV4V8v5Yb4ncFTT3rPSgZBOpCkjfK0y4oVVVJwIuDVBRMDXrPyXRL988i5ap9m9bnyEEjWfm5WkBmtffLfA=="],
 
     "@humanwhocodes/retry": ["@humanwhocodes/retry@0.4.3", "", {}, "sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ=="],
-
-    "@kit/app": ["@kit/app@workspace:packages/app"],
-
-    "@kit/base": ["@kit/base@workspace:packages/base"],
 
     "@litemw/iocc": ["@litemw/iocc@0.0.3", "", {}, "sha512-Qs3nFBd0yGt3XoOHdTAJZov2+bcOC3I1TTaoC2SuFwPLoSgSlasHJ5lDDTtSEx0Xtwp16nl8jf0sNNNaHEBlKw=="],
 

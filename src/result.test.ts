@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { Err, Ok, type Result } from './index.js';
+import { Err, Ok, type Result } from './result.js';
 
 describe('Result', () => {
   test('contains a successful value when ok is true', () => {
