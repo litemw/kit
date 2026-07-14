@@ -89,9 +89,7 @@ export class App {
     this.logger.info("App stopped 🛑", { stoppers: this.stoppers.length });
   }
 
-  waitSignals(
-    signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"],
-  ): () => void {
+  waitSignals(signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"]): () => void {
     const unsubscribe = () => {
       for (const signal of signals) {
         process.removeListener(signal, handler);
