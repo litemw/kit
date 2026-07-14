@@ -3,7 +3,6 @@ import { defComp } from '@litemw/iocc';
 import { App } from '../lib/app/app';
 import { createModule } from '../lib/app/module';
 import { IStarter, IStopper } from '../lib/app/lifecycle';
-import { ILogger } from '../lib/app/logger';
 import { Err } from '../lib/core/result';
 import { createTestLogger } from './test-logger';
 
@@ -43,15 +42,8 @@ describe('App', () => {
     const infoMessages = records
       .filter((r) => r.level === 'info')
       .map((r) => r.msg);
-    expect(infoMessages).toContain('App started');
-    expect(infoMessages).toContain('App stopped');
-  });
-
-  test('registers logger in the container', async () => {
-    const { logger } = createTestLogger();
-    const app = new App({ logger });
-
-    expect(await app.container.get(ILogger)).toBe(logger);
+    expect(infoMessages).toContain('App started 🚀');
+    expect(infoMessages).toContain('App stopped 🛑');
   });
 
   test('logs and rethrows hook errors', async () => {
@@ -69,7 +61,7 @@ describe('App', () => {
 
     await expect(app.start()).rejects.toThrow('boom');
     const errorRecord = records.find((r) => r.level === 'error');
-    expect(errorRecord?.msg).toBe('Starter hook failed');
+    expect(errorRecord?.msg).toBe('Start hook failed');
     expect(errorRecord?.err).toEqual(Err(failure));
   });
 });

@@ -1,7 +1,7 @@
-import { Container, defComp, type Component } from '@litemw/iocc';
+import { Container, type Component } from '@litemw/iocc';
 import { createContainerHooks } from './hooks';
 import { IStarter, IStopper } from './lifecycle';
-import { createLogtapeLogger, ILogger, type Logger } from './logger';
+import { createLogtapeLogger, type Logger } from './logger';
 import type { Module } from './module';
 import { Err } from '../core/result';
 
@@ -23,12 +23,6 @@ export class App {
     this.logger = input.logger ?? createLogtapeLogger();
     this.container = new Container(createContainerHooks(this.logger));
 
-    this.container.register(
-      defComp('Logger')
-        .as(ILogger)
-        .build(() => this.logger),
-    );
-
     for (const module of this.modules) {
       for (const component of module.components) {
         this.container.register(component);
@@ -41,7 +35,7 @@ export class App {
   }
 
   async start(): Promise<void> {
-    this.logger.debug('Starting app', {
+    this.logger.info('Starting app...', {
       modules: this.modules.length,
       components: this.components.length,
     });
@@ -52,16 +46,16 @@ export class App {
       try {
         await starter.onStart();
       } catch (err) {
-        this.logger.error(Err(err), 'Starter hook failed');
+        this.logger.error(Err(err), 'Start hook failed');
         throw err;
       }
     }
 
-    this.logger.info('App started', { starters: starters.length });
+    this.logger.info('App started 🚀', { starters: starters.length });
   }
 
   async stop(): Promise<void> {
-    this.logger.debug('Stopping app');
+    this.logger.info('Stopping app...');
 
     const stoppers = await this.container.get(IStopper);
 
@@ -74,6 +68,6 @@ export class App {
       }
     }
 
-    this.logger.info('App stopped', { stoppers: stoppers.length });
+    this.logger.info('App stopped 🛑', { stoppers: stoppers.length });
   }
 }

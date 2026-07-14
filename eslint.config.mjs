@@ -26,6 +26,7 @@ export default [
     rules: {
       ...tsPlugin.configs.recommended.rules,
       'no-redeclare': 'off',
+      'no-undef': 'off',
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': [
         'error',
