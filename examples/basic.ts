@@ -1,31 +1,31 @@
-import { defComp, defIntf } from '@litemw/iocc';
-import { configure, getConsoleSink } from '@logtape/logtape';
-import { App, createModule, IStarter, IStopper } from '../lib';
+import { defComp, defIntf } from "@litemw/iocc";
+import { configure, getConsoleSink } from "@logtape/logtape";
+import { App, createModule, IStarter, IStopper } from "../lib";
 
 // Domain service exposed through the container.
 type Greeter = {
   greet(name: string): string;
 };
 
-const IGreeter = defIntf<Greeter>('Greeter');
+const IGreeter = defIntf<Greeter>("Greeter");
 
-const GreeterComponent = defComp('greeter')
+const GreeterComponent = defComp("greeter")
   .as(IGreeter)
   .build(() => ({
     greet: (name: string) => `Hello, ${name}!`,
   }));
 
 // Lifecycle component: greets on start, says goodbye on stop.
-const GreetOnStart = defComp('greetOnStart')
+const GreetOnStart = defComp("greetOnStart")
   .provide(IGreeter)
   .as(IStarter)
   .as(IStopper)
   .build((greeter) => ({
     onStart() {
-      console.log(greeter.greet('world'));
+      console.log(greeter.greet("world"));
     },
     onStop() {
-      console.log('Goodbye!');
+      console.log("Goodbye!");
     },
   }));
 
@@ -35,8 +35,8 @@ await configure({
     console: getConsoleSink(),
   },
   loggers: [
-    { category: 'app', sinks: ['console'], lowestLevel: 'info' },
-    { category: ['logtape', 'meta'], sinks: [] },
+    { category: "app", sinks: ["console"], lowestLevel: "info" },
+    { category: ["logtape", "meta"], sinks: [] },
   ],
 });
 

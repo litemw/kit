@@ -1,5 +1,5 @@
-import { getLogger } from '@logtape/logtape';
-import { Err } from '../core/result';
+import { getLogger } from "@logtape/logtape";
+import { Err } from "../core/result";
 
 export type Logger = {
   debug(msg: string, kv?: Record<string, unknown>): void;
@@ -8,7 +8,7 @@ export type Logger = {
 };
 
 export function createLogtapeLogger(
-  category: string | readonly string[] = 'app',
+  category: string | readonly string[] = "app",
 ): Logger {
   const logger = getLogger(category);
 

@@ -1,41 +1,25 @@
-import js from '@eslint/js';
-import eslintConfigPrettier from 'eslint-config-prettier';
-import tsPlugin from '@typescript-eslint/eslint-plugin';
-import tsParser from '@typescript-eslint/parser';
+// @ts-check
+import tsPlugin from "@typescript-eslint/eslint-plugin";
+import prettierRecommended from "eslint-plugin-prettier/recommended";
 
 export default [
   {
-    ignores: [
-      'dist/**',
-      'node_modules/**',
-    ],
+    ignores: ["dist/**", "node_modules/**"],
   },
-  js.configs.recommended,
+  ...tsPlugin.configs["flat/recommended"],
+  prettierRecommended,
   {
-    files: ['**/*.ts'],
+    files: ["**/*.ts"],
     languageOptions: {
-      parser: tsParser,
       parserOptions: {
-        project: './tsconfig.json',
+        projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
-    plugins: {
-      '@typescript-eslint': tsPlugin,
-    },
     rules: {
-      ...tsPlugin.configs.recommended.rules,
-      'no-redeclare': 'off',
-      'no-undef': 'off',
-      'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        {
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_',
-        },
-      ],
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/explicit-module-boundary-types": "off",
+      "@typescript-eslint/no-explicit-any": "off",
     },
   },
-  eslintConfigPrettier,
 ];

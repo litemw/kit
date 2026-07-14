@@ -1,4 +1,4 @@
-import type { Component } from '@litemw/iocc';
+import type { Component } from "@litemw/iocc";
 
 export type Module = {
   readonly components: readonly Component[];

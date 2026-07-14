@@ -46,6 +46,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@logtape/logtape": "^2.2.4"
+    "@logtape/logtape": "^2.2.4",
+    "eslint-plugin-prettier": "^5.5.6"
   }
 }
