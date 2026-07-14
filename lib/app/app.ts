@@ -1,59 +1,79 @@
-import { Container, type Component } from '@litemw/iocc';
-import { IStarter, IStopper } from './hooks';
-
-export type Module = {
-  readonly components: readonly Component[];
-};
-
-export function createModule(...components: readonly Component[]): Module {
-  return { components };
-}
-
-export type App = {
-  readonly container: Container;
-  readonly modules: readonly Module[];
-  readonly components: readonly Component[];
-  start(): Promise<void>;
-  stop(): Promise<void>;
-};
+import { Container, defComp, type Component } from '@litemw/iocc';
+import { createContainerHooks } from './hooks';
+import { IStarter, IStopper } from './lifecycle';
+import { createLogtapeLogger, ILogger, type Logger } from './logger';
+import type { Module } from './module';
+import { Err } from '../core/result';
 
 export type AppInput = {
   readonly modules?: readonly Module[];
   readonly components?: readonly Component[];
+  readonly logger?: Logger;
 };
 
-export function createApp(input: AppInput = {}): App {
-  const modules = input.modules ?? [];
-  const components = input.components ?? [];
-  const container = new Container();
+export class App {
+  readonly container: Container;
+  readonly modules: readonly Module[];
+  readonly components: readonly Component[];
+  readonly logger: Logger;
 
-  for (const module of modules) {
-    for (const component of module.components) {
-      container.register(component);
+  constructor(input: AppInput = {}) {
+    this.modules = input.modules ?? [];
+    this.components = input.components ?? [];
+    this.logger = input.logger ?? createLogtapeLogger();
+    this.container = new Container(createContainerHooks(this.logger));
+
+    this.container.register(
+      defComp('Logger')
+        .as(ILogger)
+        .build(() => this.logger),
+    );
+
+    for (const module of this.modules) {
+      for (const component of module.components) {
+        this.container.register(component);
+      }
+    }
+
+    for (const component of this.components) {
+      this.container.register(component);
     }
   }
 
-  for (const component of components) {
-    container.register(component);
+  async start(): Promise<void> {
+    this.logger.debug('Starting app', {
+      modules: this.modules.length,
+      components: this.components.length,
+    });
+
+    const starters = await this.container.get(IStarter);
+
+    for (const starter of starters) {
+      try {
+        await starter.onStart();
+      } catch (err) {
+        this.logger.error(Err(err), 'Starter hook failed');
+        throw err;
+      }
+    }
+
+    this.logger.info('App started', { starters: starters.length });
   }
 
-  return {
-    container,
-    modules,
-    components,
-    async start(): Promise<void> {
-      const starters = await container.get(IStarter);
+  async stop(): Promise<void> {
+    this.logger.debug('Stopping app');
 
-      for (const starter of starters) {
-        await starter.onStart();
-      }
-    },
-    async stop(): Promise<void> {
-      const stoppers = await container.get(IStopper);
+    const stoppers = await this.container.get(IStopper);
 
-      for (const stopper of stoppers) {
+    for (const stopper of stoppers) {
+      try {
         await stopper.onStop();
+      } catch (err) {
+        this.logger.error(Err(err), 'Stopper hook failed');
+        throw err;
       }
-    },
-  };
+    }
+
+    this.logger.info('App stopped', { stoppers: stoppers.length });
+  }
 }
