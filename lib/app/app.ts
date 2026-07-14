@@ -1,15 +1,5 @@
-import { Container, defineInterface, type Component } from '@litemw/iocc';
-
-export type Starter = {
-  onStart(): void | Promise<void>;
-};
-
-export type Stopper = {
-  onStop(): void | Promise<void>;
-};
-
-export const IStarter = defineInterface<Starter>('Starter').multi;
-export const IStopper = defineInterface<Stopper>('Stopper').multi;
+import { Container, type Component } from '@litemw/iocc';
+import { IStarter, IStopper } from './hooks';
 
 export type Module = {
   readonly components: readonly Component[];

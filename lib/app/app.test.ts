@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { defineComponent } from '@litemw/iocc';
-import { createApp, createModule, IStarter, IStopper } from './app.js';
+import { createApp, createModule } from './app';
+import { IStarter, IStopper } from './hooks';
 
 describe('App', () => {
   test('registers module components and runs lifecycle hooks', async () => {

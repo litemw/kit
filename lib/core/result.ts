@@ -1,11 +1,11 @@
-export type Result<T, E> = Ok<T> | Fail<E>;
+export type Result<T, E> = Ok<T> | Err<E>;
 
 export type Ok<T> = {
   readonly ok: true;
   readonly value: T;
 };
 
-export type Fail<E> = {
+export type Err<E> = {
   readonly ok: false;
   readonly error: E;
 };
