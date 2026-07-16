@@ -76,6 +76,35 @@ describe("App", () => {
     expect(process.listenerCount("SIGUSR2")).toBe(0);
   });
 
+  test("gracefulShutdown logs the error and sets exit code when stop fails", async () => {
+    const { logger, records } = createTestLogger();
+    const stopper = defComp("failingStopper")
+      .as(IStopper)
+      .build(() => ({
+        onStop: () => {
+          throw new Error("stop failed");
+        },
+      }));
+
+    const app = new App({ components: [stopper], logger });
+    await app.start();
+    const prevExitCode = process.exitCode;
+
+    try {
+      app.waitSignals(["SIGUSR2"]);
+      process.emit("SIGUSR2");
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      const errorMessages = records
+        .filter((r) => r.level === "error")
+        .map((r) => r.msg);
+      expect(errorMessages).toContain("Graceful shutdown failed");
+      expect(process.exitCode).toBe(1);
+    } finally {
+      process.exitCode = prevExitCode;
+    }
+  });
+
   test("gracefulShutdown returns an unsubscribe function", async () => {
     const calls: string[] = [];
     const stopper = defComp("stopper")

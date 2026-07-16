@@ -98,7 +98,7 @@ export class App {
 
     const handler = (signal: NodeJS.Signals) => {
       unsubscribe();
-      this.logger.info("Received {signal}, shutting down gracefully...", {
+      this.logger.info("Received {signal} 🚨, shutting down gracefully...", {
         signal,
       });
       void this.stop(AbortReason.Shutdown).catch((err) => {
