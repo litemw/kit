@@ -36,7 +36,7 @@ describe("Lifecycle hooks", () => {
     expect(calls).toEqual(["start", "stop"]);
   });
 
-  test("logs and rethrows hook errors", async () => {
+  test("logs and returns Err on hook errors", async () => {
     const { logger, records } = createTestLogger();
     const failure = new Error("boom");
     const failingStarter = defComp("failing")
@@ -49,7 +49,7 @@ describe("Lifecycle hooks", () => {
 
     const app = new App({ components: [failingStarter], logger });
 
-    await expect(app.start()).rejects.toThrow("boom");
+    expect(await app.start()).toEqual(Err(failure));
     const errorRecord = records.find((r) => r.level === "error");
     expect(errorRecord?.msg).toBe("Start hook failed");
     expect(errorRecord?.err).toEqual(Err(failure));

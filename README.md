@@ -103,6 +103,7 @@ const app = new App({
   modules,    // readonly Module[]    — groups of components
   components, // readonly Component[] — standalone components
   logger,     // Logger               — defaults to a logtape logger ('app' category)
+  signals,    // NodeJS.Signals[]     — signals app.run() listens to (default ['SIGINT', 'SIGTERM'])
 });
 ```
 
@@ -111,21 +112,21 @@ the built-in abort components (`AbortControllerComp`, `AbortSignaler`,
 `Aborter`), then registers every component from `modules` and `components`.
 The container is available as `app.container`.
 
-- `app.start()` — resolves all `IStarter` implementations and calls `onStart()` on each, in order
-- `app.stop(reason?)` — aborts the shared signal (default reason `AbortReason.Stopped`), then resolves all `IStopper` implementations and calls `onStop()` on each, in order
-- `app.gracefulShutdown(signals?)` — registers process signal handlers (`SIGINT` and `SIGTERM` by default) that call `app.stop(AbortReason.Shutdown)`; returns an unsubscribe function
+- `app.start()` — resolves all `IStarter` implementations and calls `onStart()` on each, in order; returns `Result<void, unknown>`
+- `app.stop(reason?)` — aborts the shared signal (default reason `AbortReason.Stopped`), then resolves all `IStopper` implementations and calls `onStop()` on each, in order; returns `Result<void, unknown>`
+- `app.run()` — blocks until one of the configured `signals` arrives (then calls `app.stop(AbortReason.Shutdown)` and resolves with its `Result<void, unknown>`) or until the shared `AbortSignal` aborts — e.g. `app.stop()` or `Aborter` was called elsewhere (then resolves with `Ok`)
 
-If a hook throws, the error is logged and rethrown.
+If a hook throws, the error is logged and returned as `Err`.
 
 ```ts
 const app = new App({ modules });
 await app.start();
-app.gracefulShutdown(); // Ctrl+C / SIGTERM now stop the app cleanly
+const result = await app.run(); // resolves on Ctrl+C / SIGTERM after a clean stop
+if (!result.ok) process.exitCode = 1;
 ```
 
 Handlers are removed after the first signal, so a second signal terminates
-the process immediately. If a stop hook fails during shutdown, the error is
-logged and `process.exitCode` is set to `1`.
+the process immediately.
 
 ### `createModule(...components)`
 

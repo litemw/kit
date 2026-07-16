@@ -1,4 +1,5 @@
 export type Result<T, E> = Ok<T> | Err<E>;
+export type AsyncResult<T, E> = Promise<Ok<T> | Err<E>>;
 
 export type Ok<T> = {
   readonly ok: true;
