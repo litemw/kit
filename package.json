@@ -1,6 +1,6 @@
 {
   "name": "@litemw/kit",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Application kit inspired by go/fx — modules, lifecycle and structured logging on top of @litemw/iocc",
   "author": "VladDotH",
   "license": "MIT",
