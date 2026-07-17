@@ -11,6 +11,7 @@ import {
 } from "./lifecycle";
 import { createLogtapeLogger, type Logger } from "./logger";
 import type { Module } from "./module";
+import { containerGraphToDot, type ContainerGraphOptions } from "./graph";
 import { Err, Ok, type AsyncResult } from "../core/result";
 
 export type AppParams = {
@@ -18,6 +19,11 @@ export type AppParams = {
   components?: Component[];
   logger?: Logger;
   signals?: NodeJS.Signals[];
+};
+
+export type AppGraphOptions = ContainerGraphOptions & {
+  /** Include built-in lifecycle components, defaults to false. */
+  includeInternal?: boolean;
 };
 
 export class App {
@@ -96,6 +102,17 @@ export class App {
 
     this.logger.info("🛑 App stopped", { stoppers: this.stoppers.length });
     return Ok(undefined);
+  }
+
+  graph(options: AppGraphOptions = {}): string {
+    const { includeInternal = false, ...graphOptions } = options;
+    const components = includeInternal
+      ? [...this.components, AbortControllerComp, AbortSignaler, Aborter]
+      : this.components;
+    return containerGraphToDot(
+      { modules: this.modules, components },
+      graphOptions,
+    );
   }
 
   run(): AsyncResult<void, unknown> {

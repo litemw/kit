@@ -92,6 +92,7 @@ Runnable examples live in [`examples/`](./examples):
 
 ```sh
 bun examples/basic.ts
+bun examples/graph.ts
 ```
 
 ## 📖 API
@@ -128,15 +129,51 @@ if (!result.ok) process.exitCode = 1;
 Handlers are removed after the first signal, so a second signal terminates
 the process immediately.
 
+- `app.graph(options?)` — renders the container as a [Graphviz DOT](https://graphviz.org/doc/info/lang.html) graph; see [`containerGraphToDot`](#containergraphtodotparams-options)
+
 ### `createModule(...components)`
 
-Groups components into a module:
+Groups components into a module. Pass a name as the first argument to label
+the module (used as the cluster title in DOT graphs):
 
 ```ts
-const userModule = createModule(UserRepository, UserService, UserController);
+const userModule = createModule('users', UserRepository, UserService, UserController);
+const authModule = createModule(AuthService); // name is optional
 
 const app = new App({ modules: [userModule, authModule] });
 ```
+
+### `containerGraphToDot(params, options?)`
+
+Builds a [Graphviz DOT](https://graphviz.org/doc/info/lang.html) graph of the
+container from static component metadata — no resolution happens, so it works
+before `app.start()`:
+
+```ts
+const dot = containerGraphToDot({ modules, components });
+// or, from an app instance:
+const dot = app.graph();
+console.log(dot);
+```
+
+Render it with Graphviz: `bun run graph.ts > graph.dot && dot -Tsvg graph.dot -o graph.svg`.
+
+Graph legend:
+
+- component — box; interface — ellipse
+- solid edge `A -> B` — `A` depends on `B` (label `[]` for multi, dotted with `?` for optional)
+- dashed edge with a hollow arrowhead — the component is registered under that interface (`as(...)`)
+- red ellipse — an interface required as a singular dependency with no registered implementation
+- named modules become `subgraph cluster_*` groups
+
+Options (`ContainerGraphOptions`):
+
+- `rankdir` — layout direction: `'LR'` (default), `'RL'`, `'TB'`, `'BT'`
+- `clusters` — group module components into clusters (default `true`)
+
+`app.graph(options)` additionally accepts:
+
+- `includeInternal` — include the built-in `AbortControllerComp` / `AbortSignaler` / `Aborter` components (default `false`)
 
 ### `IStarter` / `IStopper`
 

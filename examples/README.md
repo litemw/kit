@@ -34,3 +34,21 @@ Hello, world!
 Goodbye!
 16:51:43.484 INF app App stopped 🛑
 ```
+
+## graph.ts
+
+Renders the container as a Graphviz DOT graph via `app.graph()`:
+
+- two named modules (`http`, `storage`) become subgraph clusters;
+- `Server` shows every dependency kind: singular (`Config`), multi
+  (`IHandler.multi`, drawn with a `[]` label) and optional (`ICache.optional`,
+  drawn dotted with a `?` label);
+- `UsersHandler`/`HealthHandler` implement `IHandler` (dashed edges with hollow
+  arrowheads).
+
+Run it and render an SVG with Graphviz:
+
+```sh
+bun examples/graph.ts > graph.dot
+dot -Tsvg graph.dot -o graph.svg
+```
