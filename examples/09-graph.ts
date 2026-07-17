@@ -1,5 +1,5 @@
 import { defComp, defIntf } from "@litemw/iocc";
-import { App, createModule } from "../lib";
+import { App, createConsoleLogger, createModule } from "../lib";
 
 // A small app wired to show every kind of graph edge: singular, multi and
 // optional dependencies, interface implementations, and module clusters.
@@ -45,8 +45,10 @@ const app = new App({
     createModule("storage", Database),
   ],
   components: [Config],
+  // Errors only — keeps stdout clean so it can be piped into a .dot file.
+  logger: createConsoleLogger("error"),
 });
 
 // Render with Graphviz:
-//   bun examples/graph.ts > graph.dot && dot -Tsvg graph.dot -o graph.svg
+//   bun examples/09-graph.ts > graph.dot && dot -Tsvg graph.dot -o graph.svg
 console.log(app.graph());

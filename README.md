@@ -13,7 +13,7 @@ An application kit inspired by go/fx on top of [@litemw/iocc](https://github.com
 
 📝 **Observable** — every container event (register, resolve, factory, cache) is logged
 
-🪵 **Logtape-backed** — structured logging out of the box, swappable via the `Logger` interface
+🪵 **Logging included** — console logger out of the box, logtape adapter for structured logging, swappable via the `Logger` interface
 
 🛡️ **Type-safe** — everything is wired through typed iocc tokens, no casts
 
@@ -88,11 +88,12 @@ await app.stop();  // runs every IStopper
 
 ## 🧪 Examples
 
-Runnable examples live in [`examples/`](./examples):
+Runnable examples live in [`examples/`](./examples), ordered from a bare app
+to graph visualization:
 
 ```sh
-bun examples/basic.ts
-bun examples/graph.ts
+bun examples/02-component.ts
+bun examples/09-graph.ts
 ```
 
 ## 📖 API
@@ -103,7 +104,7 @@ bun examples/graph.ts
 const app = new App({
   modules,    // readonly Module[]    — groups of components
   components, // readonly Component[] — standalone components
-  logger,     // Logger               — defaults to a logtape logger ('app' category)
+  logger,     // Logger               — defaults to a console logger (info level)
   signals,    // NodeJS.Signals[]     — signals app.run() listens to (default ['SIGINT', 'SIGTERM'])
 });
 ```
@@ -263,10 +264,17 @@ Pass your own implementation to the `App` constructor to replace the default:
 const app = new App({ modules, logger: myLogger });
 ```
 
+### `createConsoleLogger(lowestLevel?)`
+
+Creates the default console-backed `Logger`. Prints `[level] message` lines
+with logtape-style `{placeholders}` interpolated from the kv record.
+`lowestLevel` is `'debug'`, `'info'` (default) or `'error'` — e.g. pass
+`'debug'` to see factory timings, or `'error'` to keep stdout quiet.
+
 ### `createLogtapeLogger(category?)`
 
-Creates the default [logtape](https://logtape.org)-backed `Logger`
-(category `'app'` unless specified).
+Creates a [logtape](https://logtape.org)-backed `Logger` for structured
+logging (category `'app'` unless specified).
 
 > ⚠️ Logtape is **silent until configured** — set up a sink to see output:
 
@@ -289,9 +297,13 @@ registrations, resolutions, factory timings, cache hits and errors with kv
 properties:
 
 ```
-16:48:17.220 INF app Component greeter registered
-16:48:17.221 INF app Token Greeter resolved
+[info] Component Greeter registered
+[info] Token Greeter resolved
 ```
+
+Events for the built-in components and tokens (`AbortControllerComp`,
+`AbortSignaler`, `Aborter`, `IStarter`, `IStopper`) are filtered out so app
+logs only show user components; errors are never filtered.
 
 Exported so you can reuse the same observability on a standalone `Container`.
 

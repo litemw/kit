@@ -9,7 +9,7 @@ import {
   Stopper,
   AbortReason,
 } from "./lifecycle";
-import { createLogtapeLogger, type Logger } from "./logger";
+import { createConsoleLogger, type Logger } from "./logger";
 import type { Module } from "./module";
 import { containerGraphToDot, type ContainerGraphOptions } from "./graph";
 import { Err, Ok, type AsyncResult } from "../core/result";
@@ -40,7 +40,7 @@ export class App {
   constructor(p: AppParams = {}) {
     this.modules = p.modules ?? [];
     this.components = p.components ?? [];
-    this.logger = p.logger ?? createLogtapeLogger();
+    this.logger = p.logger ?? createConsoleLogger();
     this.signals = p.signals ?? ["SIGINT", "SIGTERM"];
     this.container = new Container(createContainerHooks(this.logger));
 
