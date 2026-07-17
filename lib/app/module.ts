@@ -1,18 +1,18 @@
-import type { Component } from "@litemw/iocc";
+import type { ComponentEntry } from "./entries";
 
 export type Module = {
   readonly name?: string;
-  readonly components: readonly Component[];
+  readonly components: readonly ComponentEntry[];
 };
 
-export function createModule(...components: readonly Component[]): Module;
+export function createModule(...components: readonly ComponentEntry[]): Module;
 export function createModule(
   name: string,
-  ...components: readonly Component[]
+  ...components: readonly ComponentEntry[]
 ): Module;
 export function createModule(
-  first?: string | Component,
-  ...rest: readonly Component[]
+  first?: string | ComponentEntry,
+  ...rest: readonly ComponentEntry[]
 ): Module {
   if (typeof first === "string") {
     return { name: first, components: rest };

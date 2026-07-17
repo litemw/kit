@@ -1,4 +1,4 @@
-import { Container, TypeOf, type Component } from "@litemw/iocc";
+import { Container, TypeOf } from "@litemw/iocc";
 import { createContainerHooks } from "./hooks";
 import {
   Aborter,
@@ -10,13 +10,14 @@ import {
   AbortReason,
 } from "./lifecycle";
 import { createConsoleLogger, type Logger } from "./logger";
+import { toRegistration, type ComponentEntry } from "./entries";
 import type { Module } from "./module";
 import { containerGraphToDot, type ContainerGraphOptions } from "./graph";
 import { Err, Ok, type AsyncResult } from "../core/result";
 
 export type AppParams = {
   modules?: Module[];
-  components?: Component[];
+  components?: ComponentEntry[];
   logger?: Logger;
   signals?: NodeJS.Signals[];
 };
@@ -29,7 +30,7 @@ export type AppGraphOptions = ContainerGraphOptions & {
 export class App {
   readonly container: Container;
   private modules: Module[];
-  private components: Component[];
+  private components: ComponentEntry[];
   private logger: Logger;
   private signals: NodeJS.Signals[];
 
@@ -50,14 +51,19 @@ export class App {
       .register(Aborter);
 
     for (const module of this.modules) {
-      for (const component of module.components) {
-        this.container.register(component);
+      for (const entry of module.components) {
+        this.registerEntry(entry);
       }
     }
 
-    for (const component of this.components) {
-      this.container.register(component);
+    for (const entry of this.components) {
+      this.registerEntry(entry);
     }
+  }
+
+  private registerEntry(entry: ComponentEntry): void {
+    const { component, tokens } = toRegistration(entry);
+    this.container.register(component, ...tokens);
   }
 
   async start(): AsyncResult<void, unknown> {

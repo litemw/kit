@@ -1,9 +1,10 @@
 import type { Component, Token } from "@litemw/iocc";
+import { toRegistration, type ComponentEntry } from "./entries";
 import type { Module } from "./module";
 
 export type ContainerGraphParams = {
   modules?: readonly Module[];
-  components?: readonly Component[];
+  components?: readonly ComponentEntry[];
 };
 
 export type ContainerGraphOptions = {
@@ -36,13 +37,13 @@ export function containerGraphToDot(
   const modules = params.modules ?? [];
   const components = params.components ?? [];
 
-  const allComponents = [
+  const allRegistrations = [
     ...modules.flatMap((m) => m.components),
     ...components,
-  ];
+  ].map(toRegistration);
 
   const componentIds = new Map<symbol, string>();
-  for (const component of allComponents) {
+  for (const { component } of allRegistrations) {
     if (!componentIds.has(component.key)) {
       componentIds.set(component.key, `c${componentIds.size}`);
     }
@@ -61,19 +62,35 @@ export function containerGraphToDot(
   const required = new Set<symbol>();
   const edges: string[] = [];
 
-  const uniqueComponents = [
-    ...new Map(allComponents.map((c) => [c.key, c])).values(),
-  ];
+  // The same component may appear in several entries (e.g. plain in one
+  // module and wrapped in withIntf elsewhere) — merge its extra tokens.
+  const uniqueRegistrations = new Map<
+    symbol,
+    { component: Component; tokens: Token[] }
+  >();
+  for (const { component, tokens } of allRegistrations) {
+    const existing = uniqueRegistrations.get(component.key);
+    if (existing) {
+      existing.tokens.push(...tokens);
+    } else {
+      uniqueRegistrations.set(component.key, {
+        component,
+        tokens: [...tokens],
+      });
+    }
+  }
 
-  for (const component of uniqueComponents) {
+  for (const { component, tokens } of uniqueRegistrations.values()) {
     const id = componentIds.get(component.key)!;
 
-    for (const token of component.tokens) {
+    const implementedTargets = new Set<string>();
+    for (const token of [...component.tokens, ...tokens]) {
       if (token.key === component.key) continue;
       implemented.add(token.key);
-      edges.push(
-        `${id} -> ${interfaceNode(token)} [style=dashed, arrowhead=empty];`,
-      );
+      const target = interfaceNode(token);
+      if (implementedTargets.has(target)) continue;
+      implementedTargets.add(target);
+      edges.push(`${id} -> ${target} [style=dashed, arrowhead=empty];`);
     }
 
     for (const dep of component.deps) {
@@ -99,7 +116,9 @@ export function containerGraphToDot(
 
   const emitted = new Set<symbol>();
   modules.forEach((module, index) => {
-    const fresh = module.components.filter((c) => !emitted.has(c.key));
+    const fresh = module.components
+      .map((entry) => toRegistration(entry).component)
+      .filter((component) => !emitted.has(component.key));
     for (const component of fresh) emitted.add(component.key);
     if (clusters) {
       lines.push(`  subgraph cluster_${index} {`);
@@ -117,7 +136,8 @@ export function containerGraphToDot(
     }
   });
 
-  for (const component of components) {
+  for (const entry of components) {
+    const { component } = toRegistration(entry);
     if (emitted.has(component.key)) continue;
     emitted.add(component.key);
     lines.push(componentNode(component, "  "));

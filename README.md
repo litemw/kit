@@ -144,6 +144,26 @@ const authModule = createModule(AuthService); // name is optional
 const app = new App({ modules: [userModule, authModule] });
 ```
 
+### `withIntf(component, ...interfaces)`
+
+Pairs a component with additional compatible tokens, mirroring
+`container.register(component, ...tokens)` from iocc. Useful when a component
+cannot be rebuilt with `as()` — e.g. it comes from another package — but
+should be exposed under your local interface:
+
+```ts
+import { createModule, withIntf } from '@litemw/kit';
+import { MetricsComponent } from 'some-package';
+
+const module = createModule('metrics', withIntf(MetricsComponent, IReporter.multi));
+// also accepted in the standalone list:
+const app = new App({ components: [withIntf(MetricsComponent, IReporter.multi)] });
+```
+
+The binding is type-checked: `withIntf` only accepts tokens whose interface
+the component value implements. The DOT graph renders extra tokens as
+implements-edges, same as `as()` declarations.
+
 ### `containerGraphToDot(params, options?)`
 
 Builds a [Graphviz DOT](https://graphviz.org/doc/info/lang.html) graph of the
